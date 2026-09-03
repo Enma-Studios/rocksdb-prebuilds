@@ -4,7 +4,7 @@ Automated RocksDB prebuilt binaries for Linux, macOS, and Windows.
 
 The static RocksDB builds include bzip2, lz4, snappy, zlib, and zstd compression support.
 
-Releases: https://github.com/HarperFast/rocksdb-prebuilds/releases
+Releases: https://github.com/Enma-Studios/rocksdb-prebuilds/releases
 
 To publish a prerelease build of a RocksDB version (for example, to validate a build configuration
 change before the final release), manually run the workflow with that `rocksdb_version` and a numeric
