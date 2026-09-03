@@ -34,7 +34,7 @@ jobs:
             TAG="${REQUESTED#v}"
           else
             URL="https://api.github.com/repos/facebook/rocksdb/releases/latest"
-            TAG=$(curl -s -L -H "Authorization: Bearer ${{ secrets.GH_TOKEN }}" -X GET "$URL" | jq -r '.tag_name' | tr -d 'v')
+            TAG=$(curl -s -L -H "Authorization: Bearer ${{ github.token }}" -X GET "$URL" | jq -r '.tag_name' | tr -d 'v')
           fi
           echo "Latest RocksDB release tag: v$TAG"
 
@@ -82,7 +82,7 @@ jobs:
         shell: bash
         run: |
           URL="https://api.github.com/repos/harperdb/rocksdb-prebuilds/releases/latest"
-          LATEST=$(curl -s -L -H "Authorization: Bearer ${{ secrets.GH_TOKEN }}" -X GET "$URL" | jq -r '.tag_name' | tr -d 'v')
+          LATEST=$(curl -s -L -H "Authorization: Bearer ${{ github.token }}" -X GET "$URL" | jq -r '.tag_name' | tr -d 'v')
           echo "Latest RocksDB prebuild: $LATEST"
           echo "version=$LATEST" >> $GITHUB_OUTPUT
 
@@ -116,7 +116,7 @@ jobs:
 
           if [[ "$SHOULD_BUILD" == true ]]; then
             STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-              -H "Authorization: Bearer ${{ secrets.GH_TOKEN }}" \
+              -H "Authorization: Bearer ${{ github.token }}" \
               "https://api.github.com/repos/${{ github.repository }}/releases/tags/v$RELEASE_VERSION")
             if [[ "$STATUS" == 200 ]]; then
               echo "Release v$RELEASE_VERSION already exists; choose a new revision" >&2
@@ -357,17 +357,6 @@ jobs:
         with:
           path: artifacts
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-2
-
-      - name: Upload artifacts to S3
-        run: |
-          aws s3 cp artifacts/ s3://harper-artifacts/rocksdb-prebuilds/v${{ needs.check.outputs.release_version }}/ --recursive
-
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
@@ -381,7 +370,7 @@ jobs:
           name: RocksDB v${{ needs.check.outputs.release_version }}
           tag_name: v${{ needs.check.outputs.release_version }}
           prerelease: ${{ inputs.prerelease_revision != '' }}
-          token: ${{ secrets.GH_TOKEN }}
+          token: ${{ github.token }}
 
   on-release-success:
     if: success() && !cancelled() && needs.check.outputs.should_build == 'true'
@@ -389,55 +378,17 @@ jobs:
     needs: [check, release]
     runs-on: ubuntu-latest
     steps:
-      - name: Send Slack notification
-        uses: slackapi/slack-github-action@v2.0.0
-        with:
-          method: chat.postMessage
-          token: ${{ secrets.SLACK_BOT_TOKEN }}
-          payload: |
-            {
-              "channel": "${{ secrets.SLACK_CI_CHANNEL_ID }}",
-              "text": "New RocksDB prebuild: v${{ needs.check.outputs.release_version }}",
-              "blocks": [
-                {
-                  "type": "header",
-                  "text": {
-                    "type": "plain_text",
-                    "text": "New RocksDB prebuild: v${{ needs.check.outputs.release_version }}"
-                  }
-                },
-                {
-                  "type": "context",
-                  "elements": [
-                    {
-                      "type": "mrkdwn",
-                      "text": "*Status*"
-                    },
-                    {
-                      "type": "mrkdwn",
-                      "text": ":white_check_mark:"
-                    },
-                    {
-                      "type": "mrkdwn",
-                      "text": "<https://github.com/harperdb/rocksdb-prebuilds/releases/tag/v${{ needs.check.outputs.release_version }}|GitHub Release>"
-                    }
-                  ]
-                }
-              ]
-            }
+      - name: Send Discord notification
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail-with-body --silent --show-error \
+            -H "Content-Type: application/json" \
+            --data '{"content":"✅ New RocksDB prebuild: v${{ needs.check.outputs.release_version }}\nhttps://github.com/harperdb/rocksdb-prebuilds/releases/tag/v${{ needs.check.outputs.release_version }}"}' \
+            "$DISCORD_WEBHOOK_URL"
 
-      - name: Repository Dispatch
-        if: ${{ inputs.prerelease_revision == '' }}
-        uses: peter-evans/repository-dispatch@v3
-        with:
-          event-type: new-rocksdb-prebuild
-          repository: harperdb/rocksdb-js
-          token: ${{ secrets.GH_TOKEN }}
-          client-payload: |
-            {
-              "url": "https://github.com/harperdb/rocksdb-prebuilds/releases/tag/v${{ needs.check.outputs.release_version }}",
-              "version": "${{ needs.check.outputs.release_version }}"
-            }
 
   on-release-failure:
     if: failure() && !cancelled() && needs.check.outputs.should_build == 'true'
@@ -445,39 +396,13 @@ jobs:
     needs: [check, release]
     runs-on: ubuntu-latest
     steps:
-      - name: Send Slack notification
-        uses: slackapi/slack-github-action@v2.0.0
-        with:
-          method: chat.postMessage
-          token: ${{ secrets.SLACK_BOT_TOKEN }}
-          payload: |
-            {
-              "channel": "${{ secrets.SLACK_CI_CHANNEL_ID }}",
-              "text": "RocksDB prebuild failed: v${{ needs.check.outputs.release_version }}",
-              "blocks": [
-                {
-                  "type": "header",
-                  "text": {
-                    "type": "plain_text",
-                    "text": "RocksDB prebuild failed: v${{ needs.check.outputs.release_version }}"
-                  }
-                },
-                {
-                  "type": "context",
-                  "elements": [
-                    {
-                      "type": "mrkdwn",
-                      "text": "*Status*"
-                    },
-                    {
-                      "type": "mrkdwn",
-                      "text": ":x:"
-                    },
-                    {
-                      "type": "mrkdwn",
-                      "text": "<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Workflow run ${{ github.run_id }}>"
-                    }
-                  ]
-                }
-              ]
-            }
+      - name: Send Discord notification
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail-with-body --silent --show-error \
+            -H "Content-Type: application/json" \
+            --data '{"content":"❌ RocksDB prebuild failed: v${{ needs.check.outputs.release_version }}\n${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"}' \
+            "$DISCORD_WEBHOOK_URL"
