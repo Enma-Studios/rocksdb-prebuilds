@@ -81,7 +81,7 @@ jobs:
         id: latest-prebuild
         shell: bash
         run: |
-          URL="https://api.github.com/repos/harperdb/rocksdb-prebuilds/releases/latest"
+          URL="https://api.github.com/repos/${{ github.repository }}/releases/latest"
           LATEST=$(curl -s -L -H "Authorization: Bearer ${{ github.token }}" -X GET "$URL" | jq -r '.tag_name' | tr -d 'v')
           echo "Latest RocksDB prebuild: $LATEST"
           echo "version=$LATEST" >> $GITHUB_OUTPUT
@@ -386,7 +386,7 @@ jobs:
           set -euo pipefail
           curl --fail-with-body --silent --show-error \
             -H "Content-Type: application/json" \
-            --data '{"content":"✅ New RocksDB prebuild: v${{ needs.check.outputs.release_version }}\nhttps://github.com/harperdb/rocksdb-prebuilds/releases/tag/v${{ needs.check.outputs.release_version }}"}' \
+            --data '{"content":"✅ New RocksDB prebuild: v${{ needs.check.outputs.release_version }}\n${{ github.server_url }}/${{ github.repository }}/releases/tag/v${{ needs.check.outputs.release_version }}"}' \
             "$DISCORD_WEBHOOK_URL"
 
 
@@ -406,3 +406,4 @@ jobs:
             -H "Content-Type: application/json" \
             --data '{"content":"❌ RocksDB prebuild failed: v${{ needs.check.outputs.release_version }}\n${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"}' \
             "$DISCORD_WEBHOOK_URL"
+
