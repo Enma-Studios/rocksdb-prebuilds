@@ -13,16 +13,23 @@ change before the final release), manually run the workflow with that `rocksdb_v
 
 | OS       | Arch                  | CRT Linkage     | Library Linkage | Filename |
 |----------|-----------------------|-----------------|-----------------|----------|
-| Linux    | arm64 (glibc)         | dynamic         | static          | rocksdb-X.Y.Z-linux-arm64-glibc.tar.xz |
-| Linux    | arm64 (musl)          | dynamic         | static          | rocksdb-X.Y.Z-linux-arm64-musl.tar.xz |
-| Linux    | x64 (glibc)           | dynamic         | static          | rocksdb-X.Y.Z-linux-x64-glibc.tar.xz |
-| Linux    | x64 (musl)            | dynamic         | static          | rocksdb-X.Y.Z-linux-x64-musl.tar.xz |
-| macOS    | arm64 (Apple Silicon) | dynamic         | static          | rocksdb-X.Y.Z-darwin-arm64.tar.xz |
-| macOS    | x64 (Intel)           | dynamic         | static          | rocksdb-X.Y.Z-darwin-x64.tar.xz |
-| Windows  | arm64                 | static (`/MT`)  | static          | rocksdb-X.Y.Z-windows-arm64.tar.xz |
-| Windows  | arm64                 | dynamic (`/MD`) | static          | rocksdb-X.Y.Z-windows-arm64-static-md.tar.xz |
-| Windows  | x64                   | static (`/MT`)  | static          | rocksdb-X.Y.Z-windows-x64.tar.xz  |
-| Windows  | x64                   | dynamic (`/MD`) | static          | rocksdb-X.Y.Z-windows-x64-static-md.tar.xz |
+| Linux    | arm64 (glibc)         | dynamic         | static          | rocksdb-X.Y.Z-aarch64-unknown-linux-gnu.tar.xz |
+| Linux    | arm64 (glibc)         | dynamic         | static + io-uring | rocksdb-X.Y.Z-aarch64-unknown-linux-gnu-io-uring.tar.xz |
+| Linux    | arm64 (musl)          | dynamic         | static          | rocksdb-X.Y.Z-aarch64-unknown-linux-musl.tar.xz |
+| Linux    | arm64 (musl)          | dynamic         | static + io-uring | rocksdb-X.Y.Z-aarch64-unknown-linux-musl-io-uring.tar.xz |
+| Linux    | x64 (glibc)           | dynamic         | static          | rocksdb-X.Y.Z-x86_64-unknown-linux-gnu.tar.xz |
+| Linux    | x64 (glibc)           | dynamic         | static + io-uring | rocksdb-X.Y.Z-x86_64-unknown-linux-gnu-io-uring.tar.xz |
+| Linux    | x64 (musl)            | dynamic         | static          | rocksdb-X.Y.Z-x86_64-unknown-linux-musl.tar.xz |
+| Linux    | x64 (musl)            | dynamic         | static + io-uring | rocksdb-X.Y.Z-x86_64-unknown-linux-musl-io-uring.tar.xz |
+| macOS    | arm64 (Apple Silicon) | dynamic         | static          | rocksdb-X.Y.Z-aarch64-apple-darwin.tar.xz |
+| macOS    | x64 (Intel)           | dynamic         | static          | rocksdb-X.Y.Z-x86_64-apple-darwin.tar.xz |
+| Windows  | arm64                 | static (`/MT`)  | static          | rocksdb-X.Y.Z-aarch64-pc-windows-msvc.tar.xz |
+| Windows  | arm64                 | dynamic (`/MD`) | static          | rocksdb-X.Y.Z-aarch64-pc-windows-msvc-static-md.tar.xz |
+| Windows  | x64                   | static (`/MT`)  | static          | rocksdb-X.Y.Z-x86_64-pc-windows-msvc.tar.xz  |
+| Windows  | x64                   | dynamic (`/MD`) | static          | rocksdb-X.Y.Z-x86_64-pc-windows-msvc-static-md.tar.xz |
+
+Linux io-uring archives are built with the vcpkg `liburing` feature. Regular Linux archives
+do not link to liburing.
 
 ## Windows Builds
 

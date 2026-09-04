@@ -141,33 +141,83 @@ jobs:
           - runner: macos-latest
             target: darwin-arm64
             triplet: arm64-osx-static
+            rust_target: aarch64-apple-darwin
+            io_uring: false
+            archive_suffix: ''
           - runner: macos-latest
             target: darwin-x64
             triplet: x64-osx-static
+            rust_target: x86_64-apple-darwin
+            io_uring: false
+            archive_suffix: ''
           - runner: ubuntu-22.04
             target: linux-x64-glibc
             triplet: x64-linux
+            rust_target: x86_64-unknown-linux-gnu
+            io_uring: false
+            archive_suffix: ''
           - runner: ubuntu-22.04-arm
             target: linux-arm64-glibc
             triplet: arm64-linux
+            rust_target: aarch64-unknown-linux-gnu
+            io_uring: false
+            archive_suffix: ''
           - runner: ubuntu-latest
             target: linux-x64-musl
             triplet: x64-linux-musl-static
+            rust_target: x86_64-unknown-linux-musl
+            io_uring: false
+            archive_suffix: ''
           - runner: ubuntu-24.04-arm
             target: linux-arm64-musl
             triplet: arm64-linux-musl-static
+            rust_target: aarch64-unknown-linux-musl
+            io_uring: false
+            archive_suffix: ''
           - runner: windows-latest
             target: windows-x64
             triplet: x64-windows-static
+            rust_target: x86_64-pc-windows-msvc
+            archive_suffix: ''
           - runner: windows-latest
             target: windows-x64-static-md
             triplet: x64-windows-static-md
+            rust_target: x86_64-pc-windows-msvc
+            archive_suffix: -static-md
           - runner: windows-latest
             target: windows-arm64
             triplet: arm64-windows-static
+            rust_target: aarch64-pc-windows-msvc
+            archive_suffix: ''
           - runner: windows-latest
             target: windows-arm64-static-md
             triplet: arm64-windows-static-md
+            rust_target: aarch64-pc-windows-msvc
+            archive_suffix: -static-md
+          - runner: ubuntu-22.04
+            target: linux-x64-glibc
+            triplet: x64-linux
+            rust_target: x86_64-unknown-linux-gnu
+            io_uring: true
+            archive_suffix: -io-uring
+          - runner: ubuntu-22.04-arm
+            target: linux-arm64-glibc
+            triplet: arm64-linux
+            rust_target: aarch64-unknown-linux-gnu
+            io_uring: true
+            archive_suffix: -io-uring
+          - runner: ubuntu-latest
+            target: linux-x64-musl
+            triplet: x64-linux-musl-static
+            rust_target: x86_64-unknown-linux-musl
+            io_uring: true
+            archive_suffix: -io-uring
+          - runner: ubuntu-24.04-arm
+            target: linux-arm64-musl
+            triplet: arm64-linux-musl-static
+            rust_target: aarch64-unknown-linux-musl
+            io_uring: true
+            archive_suffix: -io-uring
     runs-on: ${{ matrix.platform.runner }}
     env:
       VCPKG_ROOT: ${{ github.workspace }}/vcpkg
@@ -242,7 +292,12 @@ jobs:
           export REAL_VCPKG_ROOT=$VCPKG_ROOT
           export VCPKG_KEEP_ENV_VARS="REAL_VCPKG_ROOT;ROCKSDB_DIR;VCPKG_CMD;VCPKG_ROOT;VCPKG_TRIPLET"
 
-          if ! $VCPKG_CMD install rocksdb \
+          VCPKG_FEATURES=""
+          if [[ "${{ matrix.platform.io_uring }}" == "true" ]]; then
+            VCPKG_FEATURES="[liburing]"
+          fi
+
+          if ! $VCPKG_CMD install "rocksdb${VCPKG_FEATURES}" \
             --debug \
             --triplet ${{ matrix.platform.triplet }} \
             --overlay-ports="${GITHUB_WORKSPACE}/vcpkg-overlays" \
@@ -272,6 +327,7 @@ jobs:
           docker run --rm \
             -v "${{ github.workspace }}:/workspace" \
             -e "ROCKSDB_DIR=/workspace/rocksdb-${{ needs.check.outputs.version }}" \
+            -e "IO_URING=${{ matrix.platform.io_uring }}" \
             -e VCPKG_FORCE_SYSTEM_BINARIES=1 \
             -w /workspace \
             alpine:latest \
@@ -304,7 +360,11 @@ jobs:
               find /workspace/vcpkg/downloads || true
 
               echo \"=== Installing RocksDB ===\"
-              if ! /workspace/vcpkg/vcpkg install rocksdb \
+              VCPKG_FEATURES=""
+              if [ "\$IO_URING" = "true" ]; then
+                VCPKG_FEATURES="[liburing]"
+              fi
+              if ! /workspace/vcpkg/vcpkg install "rocksdb\$VCPKG_FEATURES" \
                 --triplet ${{ matrix.platform.triplet }} \
                 --overlay-ports=/workspace/vcpkg-overlays \
                 --overlay-triplets=/workspace/vcpkg-triplets; then
@@ -332,7 +392,7 @@ jobs:
         id: archive
         shell: bash
         run: |
-          ARCHIVE="${GITHUB_WORKSPACE}/rocksdb-${{ needs.check.outputs.release_version }}-${{ matrix.platform.target }}.tar.xz"
+          ARCHIVE="${GITHUB_WORKSPACE}/rocksdb-${{ needs.check.outputs.release_version }}-${{ matrix.platform.rust_target }}${{ matrix.platform.archive_suffix }}.tar.xz"
           cd "${GITHUB_WORKSPACE}/dist"
           tar -cf - . | xz -9 > $ARCHIVE
           echo "archive=$ARCHIVE" >> $GITHUB_OUTPUT
@@ -340,7 +400,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v6
         with:
-          name: rocksdb-${{ needs.check.outputs.release_version }}-${{ matrix.platform.target }}
+          name: rocksdb-${{ needs.check.outputs.release_version }}-${{ matrix.platform.rust_target }}${{ matrix.platform.archive_suffix }}
           path: ${{ steps.archive.outputs.archive }}
 
   release:
@@ -408,4 +468,3 @@ jobs:
             -H "Content-Type: application/json" \
             --data '{"content":"❌ RocksDB prebuild failed: v${{ needs.check.outputs.release_version }}\n${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"}' \
             "$DISCORD_WEBHOOK_URL"
-
