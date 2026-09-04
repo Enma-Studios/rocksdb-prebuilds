@@ -13,11 +13,6 @@ on:
         description: Numeric prerelease revision for publishing a prerelease build of a RocksDB version (e.g. `1` for v11.1.2-1 or `rc2` for v11.1.2-rc2)
         required: false
         type: string
-      force_build:
-        description: Build even when this RocksDB version is not newer than the latest prebuild (use prerelease_revision if the release already exists)
-        required: false
-        default: false
-        type: boolean
 
 jobs:
   check:
@@ -100,7 +95,6 @@ jobs:
           ROCKSDB_VERSION="${{ steps.latest-rocksdb.outputs.version_h }}"
           TAG_VERSION="${{ steps.latest-rocksdb.outputs.version }}"
           REVISION="${{ inputs.prerelease_revision }}"
-          FORCE_BUILD="${{ inputs.force_build }}"
           SHOULD_BUILD=false
 
           if [[ -n "$REVISION" ]]; then
@@ -111,14 +105,10 @@ jobs:
             RELEASE_VERSION="${ROCKSDB_VERSION}-${REVISION}"
             SHOULD_BUILD=true
             echo "Building RocksDB v$ROCKSDB_VERSION (tag v$TAG_VERSION) prerelease as v$RELEASE_VERSION"
-          elif [[ "$FORCE_BUILD" == true || "$ROCKSDB_VERSION" != "${{ steps.latest-prebuild.outputs.version }}" ]]; then
+          elif [[ "$ROCKSDB_VERSION" != "${{ steps.latest-prebuild.outputs.version }}" ]]; then
             RELEASE_VERSION="$ROCKSDB_VERSION"
             SHOULD_BUILD=true
-            if [[ "$FORCE_BUILD" == true ]]; then
-              echo "Force-building RocksDB v$ROCKSDB_VERSION (tag v$TAG_VERSION)"
-            else
-              echo "New RocksDB release!"
-            fi
+            echo "New RocksDB release!"
           else
             RELEASE_VERSION="$ROCKSDB_VERSION"
             echo "No new RocksDB release"

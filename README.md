@@ -11,10 +11,6 @@ change before the final release), manually run the workflow with that `rocksdb_v
 `prerelease_revision`. This publishes a prerelease such as `v11.1.2-1`, which sorts before the final
 `v11.1.2` release and does not replace it.
 
-To rebuild a version that is older than the latest prebuild, manually run the workflow with
-`force_build` enabled. If a release for that version already exists, also provide a new
-`prerelease_revision` so the generated release tag is unique.
-
 | OS       | Arch                  | CRT Linkage     | Library Linkage | Filename |
 |----------|-----------------------|-----------------|-----------------|----------|
 | Linux    | arm64 (glibc)         | dynamic         | static          | rocksdb-X.Y.Z-aarch64-unknown-linux-gnu.tar.xz |
