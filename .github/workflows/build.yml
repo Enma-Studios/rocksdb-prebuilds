@@ -311,6 +311,10 @@ jobs:
             cat ${GITHUB_WORKSPACE}/vcpkg/buildtrees/rocksdb/config-${{ matrix.platform.triplet }}-out.log 2>/dev/null || echo 'Log file not found'
             echo '=== buildtrees/rocksdb/config-${{ matrix.platform.triplet }}-err.log ==='
             cat ${GITHUB_WORKSPACE}/vcpkg/buildtrees/rocksdb/config-${{ matrix.platform.triplet }}-err.log 2>/dev/null || echo 'Log file not found'
+            echo '=== buildtrees/liburing/config-${{ matrix.platform.triplet }}-dbg-out.log ==='
+            cat ${GITHUB_WORKSPACE}/vcpkg/buildtrees/liburing/config-${{ matrix.platform.triplet }}-dbg-out.log 2>/dev/null || echo 'Log file not found'
+            echo '=== buildtrees/liburing/config-${{ matrix.platform.triplet }}-dbg-err.log ==='
+            cat ${GITHUB_WORKSPACE}/vcpkg/buildtrees/liburing/config-${{ matrix.platform.triplet }}-dbg-err.log 2>/dev/null || echo 'Log file not found'
             echo '=== buildtrees/rocksdb/install-${{ matrix.platform.triplet }}-dbg-out.log ==='
             cat ${GITHUB_WORKSPACE}/vcpkg/buildtrees/rocksdb/install-${{ matrix.platform.triplet }}-dbg-out.log 2>/dev/null || echo 'Log file not found'
             echo '=== buildtrees/rocksdb/install-${{ matrix.platform.triplet }}-dbg-err.log ==='
@@ -346,6 +350,7 @@ jobs:
                 bash \
                 build-base \
                 cmake \
+                coreutils \
                 curl \
                 git \
                 linux-headers \
@@ -374,6 +379,10 @@ jobs:
                 cat /workspace/vcpkg/buildtrees/rocksdb/install-${{ matrix.platform.triplet }}-dbg-out.log 2>/dev/null || echo 'Log file not found'
                 echo '=== install-${{ matrix.platform.triplet }}-dbg-err.log ==='
                 cat /workspace/vcpkg/buildtrees/rocksdb/install-${{ matrix.platform.triplet }}-dbg-err.log 2>/dev/null || echo 'Log file not found'
+                echo '=== liburing/config-${{ matrix.platform.triplet }}-dbg-out.log ==='
+                cat /workspace/vcpkg/buildtrees/liburing/config-${{ matrix.platform.triplet }}-dbg-out.log 2>/dev/null || echo 'Log file not found'
+                echo '=== liburing/config-${{ matrix.platform.triplet }}-dbg-err.log ==='
+                cat /workspace/vcpkg/buildtrees/liburing/config-${{ matrix.platform.triplet }}-dbg-err.log 2>/dev/null || echo 'Log file not found'
                 exit 1
               fi
 
