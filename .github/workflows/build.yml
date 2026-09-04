@@ -343,6 +343,7 @@ jobs:
 
               echo \"=== Installing packages ===\"
               apk add --no-cache \
+                bash \
                 build-base \
                 cmake \
                 curl \
